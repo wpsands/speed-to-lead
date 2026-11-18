@@ -2,6 +2,20 @@
 
 Scored 2026-11-16. Each company received one demo request from a named buyer with a genuine question. Every reply was logged for 7 days. Method and rubric: method/rubric.md.
 
+## What faster response is worth
+
+### Tallyhawk
+
+Today: first human touch in 2.2 days. Target: 1 hour. Funnel inputs from the company: 200 demo requests a month, 20% become qualified meetings, 50% of those become opportunities, $40K of pipeline per opportunity. Baseline: 20 opportunities and $800K of pipeline a month.
+
+| Scenario | Qualify rate | Extra meetings / month | Extra opps / month | Extra pipeline / quarter | Extra pipeline / year | Extra bookings / year |
+|---|---|---|---|---|---|---|
+| Conservative | 20% → 25% | 10 | 5 | $600K | $2.4M | $600K |
+| Base | 20% → 30% | 20 | 10 | $1.2M | $4.8M | $1.2M |
+| Aggressive | 20% → 40% | 40 | 20 | $2.4M | $9.6M | $2.4M |
+
+Scenarios raise the qualification rate by 25%, 50% or 100% at full effect. 100% of that effect applies here, based on how far the current response time is from the target (full effect at 24x slower or more). Rates are capped at 90%. The scenarios are directional. They sit far below the effect in the published research, which is observational. Replace them with the company's own qualification rate by response time when it is available. Method: method/impact.md.
+
 ## Benchmark
 
 | Measure | Result |

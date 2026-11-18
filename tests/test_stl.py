@@ -160,5 +160,83 @@ class EndToEnd(unittest.TestCase):
             self.assertNotIn("—", ra, "no em dashes in report copy")
 
 
+FUNNEL = dict(monthly_requests=200, qualify_rate=0.20, opp_rate=0.50, pipeline_per_opp=40000)
+
+
+class Impact(unittest.TestCase):
+    def test_parse_rate_forms(self):
+        self.assertEqual([stl.parse_rate(x) for x in ("0.2", "20", "20%", 0.2)], [0.2, 0.2, 0.2, 0.2])
+        with self.assertRaises(SystemExit):
+            stl.parse_rate("140")
+
+    def test_gap_share_log_scale(self):
+        self.assertEqual(stl.gap_share(30, 60), 0.0)
+        self.assertEqual(stl.gap_share(60, 60), 0.0)
+        self.assertEqual(stl.gap_share(72 * 60, 60), 1.0)
+        self.assertAlmostEqual(stl.gap_share(24 * 60, 60), 1.0)
+        self.assertAlmostEqual(stl.gap_share(120, 60), 0.2181, places=3)
+
+    def test_72_hours_to_1_hour_worked_example(self):
+        m = stl.impact_model(current_minutes=72 * 60, target_minutes=60, **FUNNEL)
+        cons, base, aggr = m["scenarios"]
+        self.assertEqual(m["baseline"]["pipeline_per_month"], 800000)
+        self.assertAlmostEqual(cons["qualify_rate"], 0.25)
+        self.assertAlmostEqual(cons["extra_opps_per_month"], 5)
+        self.assertAlmostEqual(cons["extra_pipeline_per_year"], 2_400_000)
+        self.assertAlmostEqual(base["extra_pipeline_per_year"], 4_800_000)
+        self.assertAlmostEqual(aggr["extra_pipeline_per_year"], 9_600_000)
+
+    def test_already_fast_means_no_gain(self):
+        m = stl.impact_model(current_minutes=4, target_minutes=60, **FUNNEL)
+        self.assertTrue(all(s["extra_pipeline_per_year"] == 0 for s in m["scenarios"]))
+
+    def test_cap_holds(self):
+        m = stl.impact_model(current_minutes=10000, target_minutes=5, monthly_requests=100, qualify_rate=0.6,
+                             opp_rate=1, pipeline_per_opp=1000, cap=0.8)
+        aggr = m["scenarios"][2]
+        self.assertAlmostEqual(aggr["qualify_rate"], 0.8)
+        self.assertTrue(aggr["capped"])
+        self.assertFalse(m["scenarios"][0]["capped"])
+
+    def test_cap_never_lowers_a_rate_already_above_it(self):
+        m = stl.impact_model(current_minutes=10000, target_minutes=5, monthly_requests=100, qualify_rate=0.95,
+                             opp_rate=1, pipeline_per_opp=1000, cap=0.9)
+        self.assertTrue(all(s["extra_qualified_per_month"] == 0 for s in m["scenarios"]))
+
+    def test_own_data_replaces_scenarios(self):
+        m = stl.impact_model(current_minutes=4320, target_minutes=60, qualify_rate_at_target=0.32, win_rate=0.25, **FUNNEL)
+        self.assertEqual(m["source"], "own data")
+        self.assertEqual(len(m["scenarios"]), 1)
+        s = m["scenarios"][0]
+        self.assertAlmostEqual(s["extra_qualified_per_month"], 24)
+        self.assertAlmostEqual(s["extra_pipeline_per_year"], 24 * 0.5 * 40000 * 12)
+        self.assertAlmostEqual(s["extra_bookings_per_year"], s["extra_pipeline_per_year"] * 0.25)
+
+    def test_cli_uses_measured_time_and_no_response_uses_window(self):
+        with tempfile.TemporaryDirectory() as d:
+            stl.main(["init", d])
+            for name in ("Acme", "Quiet Co"):
+                stl.main(["add-company", d, "--name", name, "--domain", f"{stl.slugify(name)}.example"])
+                stl.main(["submit", d, "--company", stl.slugify(name), "--at", "2026-11-02T14:00:00Z"])
+            stl.main(["touch", d, "--company", "acme", "--channel", "email", "--at", "2026-11-05T14:00:00Z",
+                      "--kind", "human"])
+            for cid in ("acme", "quiet-co"):
+                stl.main(["impact", d, "--company", cid, "--monthly-requests", "200", "--qualify-rate", "20%",
+                          "--opp-rate", "50", "--pipeline-per-opp", "40000"])
+            s = stl.score_run(stl.Run(Path(d)), now=LATER)
+            by = {r["id"]: r for r in s["companies"]}
+            self.assertEqual(by["acme"]["impact"]["inputs"]["current_minutes"], 72 * 60)
+            self.assertFalse(by["acme"]["impact"]["no_response"])
+            self.assertEqual(by["quiet-co"]["impact"]["inputs"]["current_minutes"], 7 * 1440)
+            self.assertTrue(by["quiet-co"]["impact"]["no_response"])
+            report = stl.render_report(s)
+            self.assertIn("## What faster response is worth", report)
+            self.assertIn("$2.4M", report)
+            self.assertIn("modeled as that long", report)
+
+    def test_fmt_money(self):
+        self.assertEqual([stl.fmt_money(x) for x in (950, 4500, 600000, 2400000)], ["$950", "$4.5K", "$600K", "$2.4M"])
+
+
 if __name__ == "__main__":
     unittest.main()

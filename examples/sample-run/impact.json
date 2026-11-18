@@ -1,0 +1,13 @@
+{
+  "tallyhawk": {
+    "monthly_requests": 200,
+    "qualify_rate": 0.2,
+    "opp_rate": 0.5,
+    "pipeline_per_opp": 40000,
+    "target_minutes": 60,
+    "current_minutes": null,
+    "win_rate": 0.25,
+    "qualify_rate_at_target": null,
+    "cap": 0.9
+  }
+}

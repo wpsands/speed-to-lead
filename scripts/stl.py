@@ -9,6 +9,7 @@ A run is a folder (default ./runs/<name>) holding:
   touches.jsonl   every reply: email, call, voicemail, sms, linkedin
   numbers.json    caller phone number -> company, used to attribute calls and texts
   unmatched.jsonl calls and texts pulled from Twilio that are not yet attributed
+  impact.json     funnel inputs and pipeline model, written by `impact`
   scores.json     written by `score`
   report.md       written by `report`
 
@@ -24,7 +25,10 @@ Commands:
   status RUN
   score RUN
   report RUN
-  sample OUTDIR                   build a synthetic run, score it and write the report
+  impact RUN --company ID --monthly-requests N --qualify-rate R --opp-rate R --pipeline-per-opp USD
+        [--target-minutes 60] [--current-minutes M] [--win-rate R] [--qualify-rate-at-target R] [--cap R]
+                                  model the pipeline gained by answering faster; rates accept 0.2, 20 or 20%
+  sample OUTDIR                  build a synthetic run, score it and write the report
 
 Twilio credentials come from the environment and are never printed:
   TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_NUMBER (E.164, for example +14155550100)
@@ -34,6 +38,7 @@ from __future__ import annotations
 import argparse
 import base64
 import json
+import math
 import os
 import re
 import sys
@@ -272,6 +277,12 @@ def score_run(run: Run, now: datetime | None = None) -> dict:
     s = run.settings
     touches = run.touches()
     rows = [score_company(c, touches, s["window_days"], now) for c in run.companies()]
+    impacts = _read_json(run.root / "impact.json", {})
+    for r in rows:
+        if r["id"] in impacts:
+            m = impact_for(r, impacts[r["id"]], s["window_days"])
+            if m:
+                r["impact"] = m
     scored = [r for r in rows if r["status"] == "complete"]
     responded = [r for r in scored if r["minutes_to_first_human"] is not None]
     bench = {
@@ -288,6 +299,182 @@ def score_run(run: Run, now: datetime | None = None) -> dict:
     out = {"run": s["name"], "scored_at": iso(now), "window_days": s["window_days"], "benchmark": bench, "companies": rows}
     _write_json(run.root / "scores.json", out)
     return out
+
+
+# ---------- pipeline impact ----------
+#
+# Translates a measured response time into pipeline. The client's own funnel rates are the baseline.
+# The research effect (HBR 2011: ~7x the odds of qualifying within an hour vs. later, 60x+ vs. 24 hours)
+# is observational and expressed as odds ratios, so it is never applied directly. Instead the model uses
+# either the client's own qualification rate for fast-contacted leads, or three deliberately small
+# scenarios, scaled by how large the response-time gap is and capped. See method/impact.md.
+
+SCENARIOS = (("Conservative", 0.25), ("Base", 0.50), ("Aggressive", 1.00))
+FULL_EFFECT_RATIO = 24  # the full scenario uplift applies once current time is 24x the target or more
+DEFAULT_CAP = 0.90
+
+
+def parse_rate(value) -> float:
+    """Accepts 0.2, 20, or '20%' and returns 0.2."""
+    s = str(value).strip().rstrip("%")
+    r = float(s)
+    if r > 1 or str(value).strip().endswith("%"):
+        r = r / 100
+    if not 0 <= r <= 1:
+        raise SystemExit(f"error: rate {value!r} must be between 0 and 100%")
+    return r
+
+
+def gap_share(current_minutes: float, target_minutes: float) -> float:
+    """Share of the scenario uplift that applies, on a log scale of current/target, 0..1."""
+    if current_minutes <= target_minutes:
+        return 0.0
+    return min(1.0, math.log(current_minutes / target_minutes) / math.log(FULL_EFFECT_RATIO))
+
+
+def impact_model(*, current_minutes: float, target_minutes: float, monthly_requests: float, qualify_rate: float,
+                 opp_rate: float, pipeline_per_opp: float, win_rate: float | None = None,
+                 qualify_rate_at_target: float | None = None, cap: float = DEFAULT_CAP) -> dict:
+    if target_minutes <= 0:
+        raise SystemExit("error: target minutes must be above 0")
+    base_qualified = monthly_requests * qualify_rate
+    if qualify_rate_at_target is not None:
+        source = "own data"
+        plan = [("Your data", None, max(qualify_rate, qualify_rate_at_target))]
+        share = None
+    else:
+        source = "scenarios"
+        share = gap_share(current_minutes, target_minutes)
+        plan = [(name, u, min(max(qualify_rate, cap), qualify_rate * (1 + u * share))) for name, u in SCENARIOS]
+    scenarios = []
+    for name, u, new_rate in plan:
+        extra_q = monthly_requests * (new_rate - qualify_rate)
+        extra_opps = extra_q * opp_rate
+        extra_pipe = extra_opps * pipeline_per_opp
+        row = {
+            "scenario": name,
+            "uplift": u,
+            "applied_uplift": round(new_rate / qualify_rate - 1, 4) if qualify_rate else None,
+            "capped": u is not None and new_rate < qualify_rate * (1 + u * share) - 1e-12,
+            "qualify_rate": round(new_rate, 4),
+            "extra_qualified_per_month": round(extra_q, 2),
+            "extra_opps_per_month": round(extra_opps, 2),
+            "extra_pipeline_per_month": round(extra_pipe, 2),
+            "extra_pipeline_per_quarter": round(extra_pipe * 3, 2),
+            "extra_pipeline_per_year": round(extra_pipe * 12, 2),
+        }
+        if win_rate is not None:
+            row["extra_bookings_per_year"] = round(extra_pipe * 12 * win_rate, 2)
+        scenarios.append(row)
+    return {
+        "source": source,
+        "inputs": {
+            "current_minutes": round(current_minutes, 1), "target_minutes": target_minutes,
+            "monthly_requests": monthly_requests, "qualify_rate": qualify_rate, "opp_rate": opp_rate,
+            "pipeline_per_opp": pipeline_per_opp, "win_rate": win_rate,
+            "qualify_rate_at_target": qualify_rate_at_target, "cap": cap,
+        },
+        "gap_share": None if share is None else round(share, 4),
+        "baseline": {
+            "qualified_per_month": round(base_qualified, 2),
+            "opps_per_month": round(base_qualified * opp_rate, 2),
+            "pipeline_per_month": round(base_qualified * opp_rate * pipeline_per_opp, 2),
+        },
+        "scenarios": scenarios,
+    }
+
+
+IMPACT_KEYS = ("monthly_requests", "qualify_rate", "opp_rate", "pipeline_per_opp", "target_minutes",
+               "current_minutes", "win_rate", "qualify_rate_at_target", "cap")
+
+
+def impact_for(row: dict, inputs: dict, window_days: int) -> dict | None:
+    """Runs the model for one scored company using the saved funnel inputs and the measured response time."""
+    if row.get("status") != "complete":
+        return None
+    measured = row.get("minutes_to_first_human")
+    current = inputs.get("current_minutes")
+    no_response = current is None and measured is None
+    if current is None:
+        current = measured if measured is not None else window_days * 1440
+    m = impact_model(
+        current_minutes=current, target_minutes=inputs.get("target_minutes", 60),
+        monthly_requests=inputs["monthly_requests"], qualify_rate=inputs["qualify_rate"],
+        opp_rate=inputs["opp_rate"], pipeline_per_opp=inputs["pipeline_per_opp"],
+        win_rate=inputs.get("win_rate"), qualify_rate_at_target=inputs.get("qualify_rate_at_target"),
+        cap=inputs.get("cap", DEFAULT_CAP),
+    )
+    m["no_response"] = no_response
+    return m
+
+
+def fmt_money(x: float) -> str:
+    a = abs(x)
+    if a >= 1_000_000:
+        s = f"${a / 1_000_000:.1f}M"
+    elif a >= 10_000:
+        s = f"${a / 1000:.0f}K"
+    elif a >= 1000:
+        s = f"${a / 1000:.1f}K"
+    else:
+        s = f"${a:,.0f}"
+    return ("-" if x < 0 else "") + s
+
+
+def fmt_target(m: float) -> str:
+    if m >= 60 and m % 60 == 0:
+        h = int(m // 60)
+        return f"{h} hour" if h == 1 else f"{h} hours"
+    return fmt_minutes(m)
+
+
+def fmt_pct(r: float) -> str:
+    v = r * 100
+    return f"{v:.0f}%" if abs(v - round(v)) < 0.05 else f"{v:.1f}%"
+
+
+def render_impact(name: str, m: dict) -> list[str]:
+    i, b = m["inputs"], m["baseline"]
+    today = (f"no human touch in {fmt_minutes(i['current_minutes'])}, modeled as that long"
+             if m.get("no_response") else f"first human touch in {fmt_minutes(i['current_minutes'])}")
+    lines = [
+        f"### {name}",
+        "",
+        f"Today: {today}. Target: {fmt_target(i['target_minutes'])}. "
+        f"Funnel inputs from the company: {_num(i['monthly_requests'])} demo requests a month, "
+        f"{fmt_pct(i['qualify_rate'])} become qualified meetings, {fmt_pct(i['opp_rate'])} of those become opportunities, "
+        f"{fmt_money(i['pipeline_per_opp'])} of pipeline per opportunity. "
+        f"Baseline: {_num(b['opps_per_month'])} opportunities and {fmt_money(b['pipeline_per_month'])} of pipeline a month.",
+        "",
+    ]
+    win = i["win_rate"] is not None
+    head = "| Scenario | Qualify rate | Extra meetings / month | Extra opps / month | Extra pipeline / quarter | Extra pipeline / year |"
+    sep = "|---|---|---|---|---|---|"
+    if win:
+        head += " Extra bookings / year |"
+        sep += "---|"
+    lines += [head, sep]
+    for s in m["scenarios"]:
+        row = (f"| {s['scenario']} | {fmt_pct(i['qualify_rate'])} → {fmt_pct(s['qualify_rate'])}{' (capped)' if s['capped'] else ''} | "
+               f"{_num(s['extra_qualified_per_month'])} | {_num(s['extra_opps_per_month'])} | "
+               f"{fmt_money(s['extra_pipeline_per_quarter'])} | {fmt_money(s['extra_pipeline_per_year'])} |")
+        if win:
+            row += f" {fmt_money(s['extra_bookings_per_year'])} |"
+        lines.append(row)
+    lines.append("")
+    if m["source"] == "own data":
+        lines.append(f"Uplift measured from the company's own data: leads contacted within the target time qualify at "
+                     f"{fmt_pct(i['qualify_rate_at_target'])}. This is a correlation in the company's history, so treat it as an upper bound.")
+    else:
+        pct = round((m["gap_share"] or 0) * 100)
+        lines.append(
+            f"Scenarios raise the qualification rate by 25%, 50% or 100% at full effect. {pct}% of that effect applies here, "
+            f"based on how far the current response time is from the target (full effect at {FULL_EFFECT_RATIO}x slower or more). "
+            f"Rates are capped at {fmt_pct(i['cap'])}. The scenarios are directional. They sit far below the effect in the published "
+            "research, which is observational. Replace them with the company's own qualification rate by response time when it is available. "
+            "Method: method/impact.md.")
+    lines.append("")
+    return lines
 
 
 # ---------- report ----------
@@ -332,6 +519,13 @@ def render_report(scores: dict) -> str:
         f"Scored {scores['scored_at'][:10]}. Each company received one demo request from a named buyer with a genuine question. "
         f"Every reply was logged for {scores['window_days']} days. Method and rubric: method/rubric.md.",
         "",
+    ]
+    modeled = [r for r in rows if r.get("impact")]
+    if modeled:
+        lines += ["## What faster response is worth", ""]
+        for r in modeled:
+            lines += render_impact(r["name"], r["impact"])
+    lines += [
         "## Benchmark",
         "",
         "| Measure | Result |",
@@ -482,6 +676,12 @@ SAMPLE = [
 ]
 
 
+SAMPLE_IMPACT_COMPANY = "tallyhawk"
+SAMPLE_IMPACT = {"monthly_requests": 200, "qualify_rate": 0.20, "opp_rate": 0.50, "pipeline_per_opp": 40000,
+                 "target_minutes": 60, "current_minutes": None, "win_rate": 0.25, "qualify_rate_at_target": None,
+                 "cap": DEFAULT_CAP}
+
+
 def build_sample(outdir: Path) -> Path:
     outdir = Path(outdir)
     outdir.mkdir(parents=True, exist_ok=True)
@@ -502,6 +702,7 @@ def build_sample(outdir: Path) -> Path:
                             "summary": "", "source": "sample", "ref": ""})
     _write_json(outdir / "companies.json", companies)
     _write_jsonl(outdir / "touches.jsonl", touches)
+    _write_json(outdir / "impact.json", {SAMPLE_IMPACT_COMPANY: SAMPLE_IMPACT})
     run = Run(outdir)
     scores = score_run(run, now=datetime(2026, 11, 16, tzinfo=timezone.utc))
     (outdir / "report.md").write_text(render_report(scores))
@@ -534,6 +735,14 @@ def main(argv: list[str] | None = None) -> int:
     p = sub.add_parser("twilio-pull"); p.add_argument("run"); p.add_argument("--since")
     for name in ("status", "score", "report"):
         p = sub.add_parser(name); p.add_argument("run")
+    p = sub.add_parser("impact"); p.add_argument("run"); p.add_argument("--company", required=True)
+    p.add_argument("--monthly-requests", type=float, required=True)
+    p.add_argument("--qualify-rate", required=True); p.add_argument("--opp-rate", required=True)
+    p.add_argument("--pipeline-per-opp", type=float, required=True)
+    p.add_argument("--target-minutes", type=float, default=60)
+    p.add_argument("--current-minutes", type=float)
+    p.add_argument("--win-rate"); p.add_argument("--qualify-rate-at-target")
+    p.add_argument("--cap", default=str(DEFAULT_CAP))
     p = sub.add_parser("sample"); p.add_argument("outdir")
 
     a = ap.parse_args(argv)
@@ -637,6 +846,29 @@ def main(argv: list[str] | None = None) -> int:
         s = score_run(run)
         b = s["benchmark"]
         print(f"scored {b['companies_scored']} companies, {b['companies_pending']} pending; wrote scores.json")
+    elif a.cmd == "impact":
+        run.company(a.company)
+        inputs = {
+            "monthly_requests": a.monthly_requests, "qualify_rate": parse_rate(a.qualify_rate),
+            "opp_rate": parse_rate(a.opp_rate), "pipeline_per_opp": a.pipeline_per_opp,
+            "target_minutes": a.target_minutes, "current_minutes": a.current_minutes,
+            "win_rate": parse_rate(a.win_rate) if a.win_rate is not None else None,
+            "qualify_rate_at_target": parse_rate(a.qualify_rate_at_target) if a.qualify_rate_at_target is not None else None,
+            "cap": parse_rate(a.cap),
+        }
+        impacts = _read_json(run.root / "impact.json", {})
+        impacts[a.company] = inputs
+        _write_json(run.root / "impact.json", impacts)
+        s = score_run(run)
+        row = next(r for r in s["companies"] if r["id"] == a.company)
+        if row.get("impact"):
+            print("\n".join(render_impact(row["name"], row["impact"])))
+        elif a.current_minutes is not None:
+            m = impact_model(current_minutes=a.current_minutes, **{k: v for k, v in inputs.items() if k != "current_minutes"})
+            print("\n".join(render_impact(row["name"], m)))
+        else:
+            print(f"saved funnel inputs for {a.company}; the model runs once its window closes, "
+                  "or pass --current-minutes to model now")
     elif a.cmd == "report":
         s = score_run(run)
         (run.root / "report.md").write_text(render_report(s))
