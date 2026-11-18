@@ -9,7 +9,7 @@ Measure how fast and how well a company responds when a buyer asks for a demo. E
 
 ## Load the method
 
-Read `${CLAUDE_PLUGIN_ROOT}/method/rubric.md` before starting. Follow its definitions and its rules for a fair test throughout.
+Read `${CLAUDE_PLUGIN_ROOT}/method/rubric.md` before starting. Follow its definitions and its rules for a fair test throughout. Read `${CLAUDE_PLUGIN_ROOT}/method/impact.md` before modeling pipeline impact.
 
 The CLI is `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/stl.py`. Below it is written as `stl`.
 
@@ -22,6 +22,7 @@ Ask once, only for what is missing:
 3. **Buyer details.** In `prospect` mode, the user's real name, work email, title and company. In `self` mode, a realistic test buyer whose inbox and phone the user controls. In both, the phone number for the form (the Twilio number if one is set up).
 4. **The question.** One question a real buyer would ask.
 5. **Run folder.** Default `./runs/<company>-<date>`. Run folders hold real data and stay out of git.
+6. **Funnel numbers (optional, `self` mode).** Demo requests a month, the share that become qualified meetings, the share of those that become opportunities, and average pipeline per opportunity. Optional: win rate, and the qualification rate for leads first contacted within an hour. These can wait until scoring. Never guess them; if the user does not have them, skip the impact model.
 
 In `self` mode, confirm the user has agreement from the leader who owns inbound response before submitting.
 
@@ -86,14 +87,20 @@ stl touch RUN --company <id> --channel linkedin --at <ISO time> --kind human --p
 Run `stl status RUN` to show when each window closes and what is unmatched.
 
 ### 4. Score and report
-After the last window closes:
+After the last window closes, if the user gave funnel numbers, save them:
+```
+stl impact RUN --company <id> --monthly-requests <n> --qualify-rate <r> --opp-rate <r> --pipeline-per-opp <usd> [--win-rate <r>] [--qualify-rate-at-target <r>]
+```
+The model uses the measured time to first human touch and a 1-hour target unless the user picks another with `--target-minutes`. Prefer the company's own qualification rate for fast-contacted leads over the scenarios; `method/impact.md` explains how to pull it from the CRM.
+
+Then write the report:
 ```
 stl report RUN
 ```
-This writes `scores.json` and `report.md` in the run folder. Present the scorecard: the timeline, the score by part, and the two or three changes that would gain the most points. If several companies were scored, also present the benchmark. Check that every touch in the report has a source; flag anything logged by hand.
+This writes `scores.json` and `report.md` in the run folder. Present the scorecard: the timeline, the score by part, and the two or three changes that would gain the most points. If the impact model ran, lead with the pipeline at stake and say which numbers came from the company and which are scenarios. If several companies were scored, also present the benchmark. Check that every touch in the report has a source; flag anything logged by hand.
 
 ### 5. Close the loop
-**Self mode.** Remind the user to tell the team it was a test and to remove the test lead from the CRM and reports. Offer a one-page summary for the leader who owns inbound response: the timeline, the score, and the fixes ranked by points gained.
+**Self mode.** Remind the user to tell the team it was a test and to remove the test lead from the CRM and reports. Offer a one-page summary for the leader who owns inbound response: the pipeline at stake if the impact model ran, the timeline, the score, and the fixes ranked by points gained.
 
 **Prospect mode.** Remind the user to answer every human touch now. If the user wants to use the scorecard in outreach, draft a short note to the company's revenue leader with the timeline and one fix. Draft only. The user sends it.
 

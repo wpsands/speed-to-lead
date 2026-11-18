@@ -17,6 +17,7 @@ The code can also score several companies together and write a benchmark across 
 ## What a report contains
 
 - A scorecard per company: request time, first human touch and its channel, time to the automated confirmation, touch count, best message, meeting path, form fields, and points by part.
+- What faster response is worth, when you give it your funnel numbers: extra qualified meetings, opportunities and pipeline per month, quarter and year if the first human touch moved from today's measured time to a target. See [Pipeline impact](#pipeline-impact).
 - When more than one company is scored, a ranking table and a benchmark: median time to first human touch, how many replied within 5 minutes and within an hour, how many never replied, how many offered a calendar on submit, median touches and median score.
 
 ## How it scores
@@ -30,6 +31,22 @@ The code can also score several companies together and write a benchmark across 
 | Meeting | 15 | Shortest path offered to a conversation |
 
 Automated confirmations are logged and reported but never count as a response. Full bands, definitions and the rules for a fair test are in [method/rubric.md](method/rubric.md).
+
+## Pipeline impact
+
+The scorecard says how slow the response is. The impact model says what that costs. Give it four numbers from your CRM: demo requests a month, the share that become qualified meetings, the share of those that become opportunities, and average pipeline per opportunity. It takes the measured time to first human touch as today's baseline and models a target, one hour by default.
+
+Example from the synthetic sample: first human touch in 2.2 days, 200 requests a month, 20% qualify, half of qualified meetings become opportunities, $40K per opportunity.
+
+| Scenario | Qualify rate | Extra opps / month | Extra pipeline / year |
+|---|---|---|---|
+| Conservative | 20% → 25% | 5 | $2.4M |
+| Base | 20% → 30% | 10 | $4.8M |
+| Aggressive | 20% → 40% | 20 | $9.6M |
+
+The best input is your own data. Most CRMs can show the qualification rate for leads first contacted within an hour. Pass it with `--qualify-rate-at-target` and the model uses it in place of the scenarios.
+
+Without it, the model uses three scenarios that raise the qualification rate by 25%, 50% or 100%, scaled down when the response-time gap is small and capped at 90%. The published research finds a far larger effect: firms that responded within an hour were nearly seven times as likely to qualify the lead as firms that responded an hour later, and more than 60 times as likely as firms that took 24 hours or longer (Oldroyd, McElheran and Elkington, Harvard Business Review, 2011). That finding is observational and stated as odds, so the model does not apply it directly. Treat the scenarios as directional. The full method is in [method/impact.md](method/impact.md).
 
 ## Install
 
@@ -85,6 +102,8 @@ python3 scripts/stl.py submit runs/acme-2026-11 --company acme --fields 6 --phon
 python3 scripts/stl.py import runs/acme-2026-11 inbox-touches.json
 python3 scripts/stl.py twilio-pull runs/acme-2026-11
 python3 scripts/stl.py status runs/acme-2026-11
+python3 scripts/stl.py impact runs/acme-2026-11 --company acme --monthly-requests 200 \
+    --qualify-rate 20% --opp-rate 50% --pipeline-per-opp 40000 [--win-rate 25%] [--qualify-rate-at-target 32%]
 python3 scripts/stl.py report runs/acme-2026-11
 python3 scripts/stl.py sample /tmp/sample
 ```

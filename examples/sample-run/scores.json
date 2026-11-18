@@ -214,7 +214,69 @@
         "meeting": 4
       },
       "total": 16,
-      "grade": "F"
+      "grade": "F",
+      "impact": {
+        "source": "scenarios",
+        "inputs": {
+          "current_minutes": 3100.0,
+          "target_minutes": 60,
+          "monthly_requests": 200,
+          "qualify_rate": 0.2,
+          "opp_rate": 0.5,
+          "pipeline_per_opp": 40000,
+          "win_rate": 0.25,
+          "qualify_rate_at_target": null,
+          "cap": 0.9
+        },
+        "gap_share": 1.0,
+        "baseline": {
+          "qualified_per_month": 40.0,
+          "opps_per_month": 20.0,
+          "pipeline_per_month": 800000.0
+        },
+        "scenarios": [
+          {
+            "scenario": "Conservative",
+            "uplift": 0.25,
+            "applied_uplift": 0.25,
+            "capped": false,
+            "qualify_rate": 0.25,
+            "extra_qualified_per_month": 10.0,
+            "extra_opps_per_month": 5.0,
+            "extra_pipeline_per_month": 200000.0,
+            "extra_pipeline_per_quarter": 600000.0,
+            "extra_pipeline_per_year": 2400000.0,
+            "extra_bookings_per_year": 600000.0
+          },
+          {
+            "scenario": "Base",
+            "uplift": 0.5,
+            "applied_uplift": 0.5,
+            "capped": false,
+            "qualify_rate": 0.3,
+            "extra_qualified_per_month": 20.0,
+            "extra_opps_per_month": 10.0,
+            "extra_pipeline_per_month": 400000.0,
+            "extra_pipeline_per_quarter": 1200000.0,
+            "extra_pipeline_per_year": 4800000.0,
+            "extra_bookings_per_year": 1200000.0
+          },
+          {
+            "scenario": "Aggressive",
+            "uplift": 1.0,
+            "applied_uplift": 1.0,
+            "capped": false,
+            "qualify_rate": 0.4,
+            "extra_qualified_per_month": 40.0,
+            "extra_opps_per_month": 20.0,
+            "extra_pipeline_per_month": 800000.0,
+            "extra_pipeline_per_quarter": 2400000.0,
+            "extra_pipeline_per_year": 9600000.0,
+            "extra_bookings_per_year": 2400000.0
+          }
+        ],
+        "no_response": false
+      }
     },
     {
       "id": "meridian-ops",
