@@ -55,10 +55,6 @@ Point the number's incoming call webhook at a TwiML Bin like this, so every call
 </Response>
 ```
 
-Then, in the same number's settings, clear the URL under **Messaging → A message comes in**. New Twilio numbers point there at a demo webhook that texts back "Hello from Twilio", which would reply to every rep who texts you. With the URL blank, texts are logged and nothing is sent.
-
-Upgrade the account before a real wave. On a trial account every caller hears a trial notice before your greeting.
-
 Set three environment variables through your secret manager, not a committed file:
 
 ```
