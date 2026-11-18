@@ -40,6 +40,8 @@ Automated confirmations are logged and reported but never count as a response. F
 
 Then ask Claude Code: "Run a speed to lead test on our demo form" with your company name and form URL, or "Run a speed to lead test on {company}" for a single prospect.
 
+Nothing needs to be scheduled. The inbox, Twilio and LinkedIn all keep timestamps, so the agent collects everything in one pass after the seven days and scores it then. Do not reply to, delete or archive anything from the company during the window.
+
 ## What it needs
 
 | Source | Used for | Setup |

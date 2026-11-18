@@ -31,7 +31,7 @@ In `self` mode, confirm the user has agreement from the leader who owns inbound 
 Test what this run will use and state the result before going on:
 - Email: a Gmail connector signed in as the buyer's work email. Confirm with one metadata-only search.
 - Browser: the browser tool available in this session, for filling forms.
-- Phone: `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` and `TWILIO_NUMBER` in the environment. Load them with the user's secret manager (for example `hq secrets exec`); never ask the user to paste a token into chat. If they are missing, phone touches are logged by hand and the report says so.
+- Phone: `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN` and `TWILIO_NUMBER` in the environment. Load them from the user's environment or secret manager; never ask the user to paste a token into chat. If they are missing, phone touches are logged by hand and the report says so.
 - LinkedIn: always logged by hand.
 
 ### 1. Set up the run
@@ -50,7 +50,9 @@ stl add-company RUN --name "<Company>" --domain <domain> --form-url <url>
    ```
 5. If the scheduler offered a booking, do not book it.
 
-### 3. Collect, once a day during the window
+### 3. Collect, once, after the window closes
+Every source keeps its own timestamps: the inbox keeps each email's sent time, Twilio keeps its call and message log, and LinkedIn keeps message times. So collection runs once, after the window closes, and nothing needs to be scheduled. When the request is submitted, tell the user the date the window closes and ask them to come back then. Remind them not to reply to, delete or archive anything from the company until then. If the user asks for an interim look during the window, run the same steps; imports skip anything already logged.
+
 **Email.** Search the inbox for each company's domain since its request time, for example `from:<domain> after:YYYY/MM/DD`. For each message decide:
 - `kind`: `auto` for confirmations, receipts and no-reply senders; `human` for a named person writing about this request. Skip newsletters and event invitations entirely.
 - `personalization`: 0 template, 1 names the company or role, 2 answers the question asked.
@@ -76,12 +78,12 @@ stl map-number RUN --number +1... --company <id>
 ```
 Set `personalization` and `meeting` on phone touches only when a voicemail or text shows them; otherwise leave the defaults.
 
-**LinkedIn.** Ask the user whether anyone from a tested company reached out, then log each one:
+**LinkedIn.** Ask the user to open their LinkedIn messages and connection requests and report anyone from the company, with the time shown on each, then log each one:
 ```
 stl touch RUN --company <id> --channel linkedin --at <ISO time> --kind human --personalization <0-2> --meeting <level>
 ```
 
-Run `stl status RUN` to show which windows are open and what is unmatched.
+Run `stl status RUN` to show when each window closes and what is unmatched.
 
 ### 4. Score and report
 After the last window closes:
