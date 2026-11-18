@@ -1,0 +1,282 @@
+{
+  "run": "Synthetic sample (fictional companies)",
+  "scored_at": "2026-11-16T00:00:00Z",
+  "window_days": 7,
+  "benchmark": {
+    "companies_scored": 8,
+    "companies_pending": 0,
+    "no_human_response": 1,
+    "median_minutes_to_first_human": 52.0,
+    "within_5_minutes": 1,
+    "within_1_hour": 4,
+    "median_human_touches": 3.0,
+    "instant_scheduler": 1,
+    "median_score": 60.0
+  },
+  "companies": [
+    {
+      "id": "ledgerline",
+      "name": "Ledgerline",
+      "domain": "ledgerline.example",
+      "status": "complete",
+      "submitted_at": "2026-11-02T14:00:00Z",
+      "window_ends": "2026-11-09T14:00:00Z",
+      "minutes_to_first_human": 3.0,
+      "first_human_channel": "call",
+      "minutes_to_first_auto": 0.5,
+      "human_touches": 4,
+      "auto_touches": 1,
+      "touches_by_channel": {
+        "call": 1,
+        "email": 2,
+        "linkedin": 1
+      },
+      "channels": [
+        "email",
+        "linkedin",
+        "phone"
+      ],
+      "best_personalization": 2,
+      "best_meeting": "instant scheduler",
+      "form_fields": 5,
+      "phone_required": false,
+      "points": {
+        "speed": 40,
+        "persistence": 15,
+        "channels": 10,
+        "personalization": 15,
+        "meeting": 15
+      },
+      "total": 95,
+      "grade": "A"
+    },
+    {
+      "id": "quorum-crm",
+      "name": "Quorum CRM",
+      "domain": "quorum-crm.example",
+      "status": "complete",
+      "submitted_at": "2026-11-02T14:37:00Z",
+      "window_ends": "2026-11-09T14:37:00Z",
+      "minutes_to_first_human": 11.0,
+      "first_human_channel": "email",
+      "minutes_to_first_auto": 1.0,
+      "human_touches": 4,
+      "auto_touches": 1,
+      "touches_by_channel": {
+        "email": 3,
+        "call": 1
+      },
+      "channels": [
+        "email",
+        "phone"
+      ],
+      "best_personalization": 2,
+      "best_meeting": "times",
+      "form_fields": 7,
+      "phone_required": true,
+      "points": {
+        "speed": 32,
+        "persistence": 15,
+        "channels": 7,
+        "personalization": 15,
+        "meeting": 12
+      },
+      "total": 81,
+      "grade": "B"
+    },
+    {
+      "id": "brightpath-security",
+      "name": "Brightpath Security",
+      "domain": "brightpath-security.example",
+      "status": "complete",
+      "submitted_at": "2026-11-02T15:14:00Z",
+      "window_ends": "2026-11-09T15:14:00Z",
+      "minutes_to_first_human": 52.0,
+      "first_human_channel": "voicemail",
+      "minutes_to_first_auto": 2.0,
+      "human_touches": 5,
+      "auto_touches": 1,
+      "touches_by_channel": {
+        "voicemail": 1,
+        "email": 3,
+        "sms": 1
+      },
+      "channels": [
+        "email",
+        "phone",
+        "sms"
+      ],
+      "best_personalization": 1,
+      "best_meeting": "link",
+      "form_fields": 9,
+      "phone_required": true,
+      "points": {
+        "speed": 24,
+        "persistence": 20,
+        "channels": 10,
+        "personalization": 8,
+        "meeting": 10
+      },
+      "total": 72,
+      "grade": "B"
+    },
+    {
+      "id": "cobalt-hr",
+      "name": "Cobalt HR",
+      "domain": "cobalt-hr.example",
+      "status": "complete",
+      "submitted_at": "2026-11-02T15:51:00Z",
+      "window_ends": "2026-11-09T15:51:00Z",
+      "minutes_to_first_human": 190.0,
+      "first_human_channel": "email",
+      "minutes_to_first_auto": 1.0,
+      "human_touches": 2,
+      "auto_touches": 1,
+      "touches_by_channel": {
+        "email": 2
+      },
+      "channels": [
+        "email"
+      ],
+      "best_personalization": 1,
+      "best_meeting": "link",
+      "form_fields": 6,
+      "phone_required": false,
+      "points": {
+        "speed": 16,
+        "persistence": 10,
+        "channels": 4,
+        "personalization": 8,
+        "meeting": 10
+      },
+      "total": 48,
+      "grade": "D"
+    },
+    {
+      "id": "fieldnote",
+      "name": "Fieldnote",
+      "domain": "fieldnote.example",
+      "status": "complete",
+      "submitted_at": "2026-11-02T16:28:00Z",
+      "window_ends": "2026-11-09T16:28:00Z",
+      "minutes_to_first_human": 1300.0,
+      "first_human_channel": "email",
+      "minutes_to_first_auto": 0.3,
+      "human_touches": 3,
+      "auto_touches": 1,
+      "touches_by_channel": {
+        "email": 3
+      },
+      "channels": [
+        "email"
+      ],
+      "best_personalization": 0,
+      "best_meeting": "link",
+      "form_fields": 11,
+      "phone_required": true,
+      "points": {
+        "speed": 8,
+        "persistence": 15,
+        "channels": 4,
+        "personalization": 0,
+        "meeting": 10
+      },
+      "total": 37,
+      "grade": "F"
+    },
+    {
+      "id": "tallyhawk",
+      "name": "Tallyhawk",
+      "domain": "tallyhawk.example",
+      "status": "complete",
+      "submitted_at": "2026-11-02T17:05:00Z",
+      "window_ends": "2026-11-09T17:05:00Z",
+      "minutes_to_first_human": 3100.0,
+      "first_human_channel": "email",
+      "minutes_to_first_auto": 2.0,
+      "human_touches": 1,
+      "auto_touches": 1,
+      "touches_by_channel": {
+        "email": 1
+      },
+      "channels": [
+        "email"
+      ],
+      "best_personalization": 0,
+      "best_meeting": "questions",
+      "form_fields": 4,
+      "phone_required": false,
+      "points": {
+        "speed": 3,
+        "persistence": 5,
+        "channels": 4,
+        "personalization": 0,
+        "meeting": 4
+      },
+      "total": 16,
+      "grade": "F"
+    },
+    {
+      "id": "meridian-ops",
+      "name": "Meridian Ops",
+      "domain": "meridian-ops.example",
+      "status": "complete",
+      "submitted_at": "2026-11-02T17:42:00Z",
+      "window_ends": "2026-11-09T17:42:00Z",
+      "minutes_to_first_human": null,
+      "first_human_channel": null,
+      "minutes_to_first_auto": 1.0,
+      "human_touches": 0,
+      "auto_touches": 1,
+      "touches_by_channel": {},
+      "channels": [],
+      "best_personalization": 0,
+      "best_meeting": "none",
+      "form_fields": 8,
+      "phone_required": true,
+      "points": {
+        "speed": 0,
+        "persistence": 0,
+        "channels": 0,
+        "personalization": 0,
+        "meeting": 0
+      },
+      "total": 0,
+      "grade": "F"
+    },
+    {
+      "id": "parcelwise",
+      "name": "Parcelwise",
+      "domain": "parcelwise.example",
+      "status": "complete",
+      "submitted_at": "2026-11-02T18:19:00Z",
+      "window_ends": "2026-11-09T18:19:00Z",
+      "minutes_to_first_human": 6.0,
+      "first_human_channel": "email",
+      "minutes_to_first_auto": null,
+      "human_touches": 3,
+      "auto_touches": 0,
+      "touches_by_channel": {
+        "email": 2,
+        "call": 1
+      },
+      "channels": [
+        "email",
+        "phone"
+      ],
+      "best_personalization": 2,
+      "best_meeting": "times",
+      "form_fields": 5,
+      "phone_required": false,
+      "points": {
+        "speed": 32,
+        "persistence": 15,
+        "channels": 7,
+        "personalization": 15,
+        "meeting": 12
+      },
+      "total": 81,
+      "grade": "B"
+    }
+  ]
+}

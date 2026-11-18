@@ -1,0 +1,14 @@
+{
+  "name": "speed-to-lead",
+  "description": "Speed-to-Lead Test, a demo-response benchmark plugin for B2B SaaS.",
+  "owner": {
+    "name": "Page Sands"
+  },
+  "plugins": [
+    {
+      "name": "speed-to-lead",
+      "source": "./",
+      "description": "Measures how fast and how well B2B SaaS companies respond to a demo request across email, phone, SMS and LinkedIn, and scores each one out of 100."
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "name": "speed-to-lead",
+  "version": "0.1.0",
+  "description": "Speed-to-Lead Test for B2B SaaS. Submits a genuine demo request, logs every email, call, voicemail, SMS and LinkedIn touch for seven days, and scores each company on speed, persistence, channels, personalization and path to a meeting, with a cohort benchmark.",
+  "author": {
+    "name": "Page Sands",
+    "url": "https://sandsdx.com"
+  },
+  "homepage": "https://sandsdx.com/agents/#speed-to-lead",
+  "repository": "https://github.com/wpsands/speed-to-lead",
+  "license": "MIT",
+  "keywords": ["b2b-saas", "speed-to-lead", "lead-response", "pipeline", "gtm", "sales-development", "benchmark"]
+}
