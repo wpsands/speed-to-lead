@@ -4,15 +4,20 @@
 
 **When a buyer asks for a demo, how fast and how well does the company respond?**
 
-Speed-to-Lead Test is a Claude Code plugin that measures it. You submit one genuine demo request to each company under your real name. The agent logs every email, call, voicemail, text and LinkedIn message for seven days, then scores each company out of 100 and writes a scorecard per company and a benchmark across the group.
+Speed-to-Lead Test is a Claude Code plugin that measures it. One demo request goes in through the company's own form. The agent logs every email, call, voicemail, text and LinkedIn message for seven days, then scores the response out of 100 and writes a scorecard: what the buyer experienced, minute by minute, and where the points were lost.
 
-See a full report on synthetic data: [examples/sample-run/report.md](examples/sample-run/report.md). All eight companies in it are fictional.
+## Two ways to use it
+
+**Diagnose your own funnel.** Submit a request to your own demo form, with leadership's agreement and without telling the reps, and see exactly what a buyer sees. Most teams have never watched their inbound process from the outside. Run it again after a fix to confirm the change held.
+
+**Check one prospect before you reach out.** As a consultant or seller, test a single company you are already talking to or about to approach, as yourself, with a genuine question. The timeline becomes the opening of the conversation. Use it sparingly: one company, one request.
+
+The code can also score several companies together and write a benchmark across them. See a full report on synthetic data: [examples/sample-run/report.md](examples/sample-run/report.md). All eight companies in it are fictional.
 
 ## What a report contains
 
-- A benchmark: median time to first human touch, how many companies replied within 5 minutes and within an hour, how many never replied, how many offered a calendar on submit, median touches and median score.
-- A ranking table with score, grade, first human touch, touches and channels.
 - A scorecard per company: request time, first human touch and its channel, time to the automated confirmation, touch count, best message, meeting path, form fields, and points by part.
+- When more than one company is scored, a ranking table and a benchmark: median time to first human touch, how many replied within 5 minutes and within an hour, how many never replied, how many offered a calendar on submit, median touches and median score.
 
 ## How it scores
 
@@ -33,7 +38,7 @@ Automated confirmations are logged and reported but never count as a response. F
 /plugin install speed-to-lead@speed-to-lead
 ```
 
-Then ask Claude Code: "Run a speed to lead test on these companies" with a list of names and demo form URLs.
+Then ask Claude Code: "Run a speed to lead test on our demo form" with your company name and form URL, or "Run a speed to lead test on {company}" for a single prospect.
 
 ## What it needs
 
@@ -46,7 +51,7 @@ Then ask Claude Code: "Run a speed to lead test on these companies" with a list 
 
 ### Twilio voicemail
 
-Point the number's incoming call webhook at a TwiML Bin like this, so every call is answered by voicemail and recorded:
+Point the number's incoming call webhook at a TwiML Bin like this, so every call is answered by voicemail and recorded. Use the name on the form in the greeting:
 
 ```xml
 <Response>
@@ -57,7 +62,7 @@ Point the number's incoming call webhook at a TwiML Bin like this, so every call
 
 Then, in the same number's settings, clear the URL under **Messaging → A message comes in**. New Twilio numbers point there at a demo webhook that texts back "Hello from Twilio", which would reply to every rep who texts you. With the URL blank, texts are logged and nothing is sent.
 
-Upgrade the account before a real wave. On a trial account every caller hears a trial notice before your greeting.
+Upgrade the account before a real test. On a trial account every caller hears a trial notice before your greeting.
 
 Set three environment variables through your secret manager, not a committed file:
 
@@ -72,13 +77,13 @@ The script only reads from Twilio. It never places calls or sends texts.
 The skill drives `scripts/stl.py`, which you can also run directly. Python 3.10 or later, standard library only.
 
 ```
-python3 scripts/stl.py init runs/wave-1 --name "Wave 1"
-python3 scripts/stl.py add-company runs/wave-1 --name "Acme" --domain acme.com --form-url https://acme.com/demo
-python3 scripts/stl.py submit runs/wave-1 --company acme --fields 6 --phone-required
-python3 scripts/stl.py import runs/wave-1 inbox-touches.json
-python3 scripts/stl.py twilio-pull runs/wave-1
-python3 scripts/stl.py status runs/wave-1
-python3 scripts/stl.py report runs/wave-1
+python3 scripts/stl.py init runs/acme-2026-11 --name "Acme self-test"
+python3 scripts/stl.py add-company runs/acme-2026-11 --name "Acme" --domain acme.com --form-url https://acme.com/demo
+python3 scripts/stl.py submit runs/acme-2026-11 --company acme --fields 6 --phone-required
+python3 scripts/stl.py import runs/acme-2026-11 inbox-touches.json
+python3 scripts/stl.py twilio-pull runs/acme-2026-11
+python3 scripts/stl.py status runs/acme-2026-11
+python3 scripts/stl.py report runs/acme-2026-11
 python3 scripts/stl.py sample /tmp/sample
 ```
 
@@ -86,7 +91,7 @@ Run folders hold real company data. `runs/` is in `.gitignore`.
 
 ## Rules for a fair test
 
-Use your real identity and a question you want answered. One request per company. Do not reply during the window. When it closes, answer every person who reached out. Publish results in aggregate unless a company agrees to be named. Details in [method/rubric.md](method/rubric.md).
+On your own funnel, get leadership's agreement and keep the reps unaware so the result is real. On another company, use your real identity and a question you want answered, one request only. Either way, do not reply during the window, and answer every person who reached out once it closes. Details in [method/rubric.md](method/rubric.md).
 
 ## Development
 

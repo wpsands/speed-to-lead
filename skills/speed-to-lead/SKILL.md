@@ -1,6 +1,6 @@
 ---
 name: speed-to-lead
-description: Runs a Speed-to-Lead Test on B2B SaaS companies. Submits a genuine demo request under the user's real identity, logs every email, call, voicemail, SMS and LinkedIn touch for seven days, then scores each company on speed, persistence, channels, personalization and path to a meeting, and writes a scorecard per company plus a cohort benchmark. Use when the user says "speed to lead test", "test {company}'s demo response", "how fast does {company} respond", "lead response benchmark", "check the speed-to-lead run", or "score the speed-to-lead wave".
+description: Runs a Speed-to-Lead Test on a B2B SaaS demo funnel, either the user's own (a self-diagnostic) or one prospect's. Submits a demo request through the real form, logs every email, call, voicemail, SMS and LinkedIn touch for seven days, then scores the response on speed, persistence, channels, personalization and path to a meeting and writes a scorecard. Use when the user says "speed to lead test", "test our demo form", "how fast do we respond to demo requests", "test {company}'s demo response", "how fast does {company} respond", "check the speed-to-lead run", or "score the speed-to-lead test".
 ---
 
 # Speed-to-Lead Test
@@ -17,10 +17,13 @@ The CLI is `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/stl.py`. Below it is written a
 
 Ask once, only for what is missing:
 
-1. **Run folder.** Default `./runs/<wave-name>`. Run folders hold real company data and stay out of git.
-2. **Companies.** Name, domain, and demo form URL for each. Keep a wave to 30 or fewer.
-3. **Buyer details.** The user's real name, work email, title, company, and the phone number to put on forms (the Twilio number if one is set up).
-4. **The question.** One genuine question the user wants answered, adapted lightly per company.
+1. **Mode.** `self` (the user's own funnel) or `prospect` (another company). The rubric's rules differ by mode; follow the matching set.
+2. **Company.** Name, domain, and demo form URL. Default to one company. Score several only when the user asks.
+3. **Buyer details.** In `prospect` mode, the user's real name, work email, title and company. In `self` mode, a realistic test buyer whose inbox and phone the user controls. In both, the phone number for the form (the Twilio number if one is set up).
+4. **The question.** One question a real buyer would ask.
+5. **Run folder.** Default `./runs/<company>-<date>`. Run folders hold real data and stay out of git.
+
+In `self` mode, confirm the user has agreement from the leader who owns inbound response before submitting.
 
 ## Workflow
 
@@ -33,7 +36,7 @@ Test what this run will use and state the result before going on:
 
 ### 1. Set up the run
 ```
-stl init RUN --name "<wave name>"
+stl init RUN --name "<company> <mode> test"
 stl add-company RUN --name "<Company>" --domain <domain> --form-url <url>
 ```
 
@@ -85,10 +88,12 @@ After the last window closes:
 ```
 stl report RUN
 ```
-This writes `scores.json` and `report.md` in the run folder. Present the benchmark and the top and bottom three scorecards. Check that every touch in the report has a source; flag anything logged by hand.
+This writes `scores.json` and `report.md` in the run folder. Present the scorecard: the timeline, the score by part, and the two or three changes that would gain the most points. If several companies were scored, also present the benchmark. Check that every touch in the report has a source; flag anything logged by hand.
 
 ### 5. Close the loop
-Remind the user of rule 4 in the rubric: answer every human touch now. If the user wants to use a scorecard in outreach, draft it as a short note to the company's revenue leader with the timeline and one fix. Draft only. The user sends it.
+**Self mode.** Remind the user to tell the team it was a test and to remove the test lead from the CRM and reports. Offer a one-page summary for the leader who owns inbound response: the timeline, the score, and the fixes ranked by points gained.
+
+**Prospect mode.** Remind the user to answer every human touch now. If the user wants to use the scorecard in outreach, draft a short note to the company's revenue leader with the timeline and one fix. Draft only. The user sends it.
 
 ## Output rules
 - Times in the report are measured from the recorded submit time. Never estimate a missing time; leave the touch out and say so.

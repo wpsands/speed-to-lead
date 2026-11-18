@@ -35,8 +35,17 @@ Speed carries the most weight because the odds of reaching and qualifying a lead
 
 ## Rules for a fair test
 
+### Testing your own funnel
+
+1. Get agreement from the leader who owns inbound response. Do not tell the reps or the SDR manager; a test they know about measures nothing.
+2. Use a realistic test buyer: a believable name, title and company, an email inbox and phone number you control, and a question a real prospect would ask. Match the segment you most want to win.
+3. Do not reply during the window.
+4. After the window closes, tell the team it was a test, share the scorecard with the people who responded, and remove the test lead from the CRM and reports.
+
+### Testing another company
+
 1. One request per company, under your real name, work email and title, with a question you would actually want answered.
-2. Use the same contact details and a similar question for every company in a wave.
+2. Use it sparingly, on a company you are already talking to or plan to approach. It is a way to start a conversation, not a volume tactic.
 3. Do not reply during the window. A reply changes what the company does next.
-4. After the window closes, answer every human touch: take the meeting if you are interested, or thank them and say you were benchmarking response times.
-5. Keep company names and results out of anything public unless the company agrees. Publish benchmarks in aggregate.
+4. After the window closes, answer every human touch: take the meeting if you are interested, or thank them and say you were looking at how their inbound process works.
+5. Keep company names and results out of anything public unless the company agrees. If you score several companies, publish only in aggregate.
