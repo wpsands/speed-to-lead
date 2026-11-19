@@ -48,17 +48,6 @@ The best input is your own data. Most CRMs can show the qualification rate for l
 
 Without it, the model uses three scenarios that raise the qualification rate by 25%, 50% or 100%, scaled down when the response-time gap is small and capped at 90%. The published research finds a far larger effect: firms that responded within an hour were nearly seven times as likely to qualify the lead as firms that responded an hour later, and more than 60 times as likely as firms that took 24 hours or longer (Oldroyd, McElheran and Elkington, Harvard Business Review, 2011). That finding is observational and stated as odds, so the model does not apply it directly. Treat the scenarios as directional. The full method is in [method/impact.md](method/impact.md).
 
-## Install
-
-```
-/plugin marketplace add wpsands/speed-to-lead
-/plugin install speed-to-lead@speed-to-lead
-```
-
-Then ask Claude Code: "Run a speed to lead test on our demo form" with your company name and form URL, or "Run a speed to lead test on {company}" for a single prospect.
-
-Nothing needs to be scheduled. The inbox, Twilio and LinkedIn all keep timestamps, so the agent collects everything in one pass after the seven days and scores it then. Do not reply to, delete or archive anything from the company during the window.
-
 ## What it needs
 
 | Source | Used for | Setup |
@@ -70,11 +59,11 @@ Nothing needs to be scheduled. The inbox, Twilio and LinkedIn all keep timestamp
 
 ### Twilio voicemail
 
-Point the number's incoming call webhook at a TwiML Bin like this, so every call is answered by voicemail and recorded. Use the name on the form in the greeting:
+Point the number's incoming call webhook at a TwiML Bin like this, so every call is answered by voicemail and recorded. Replace Jordan Lee with the name you put on the form:
 
 ```xml
 <Response>
-  <Say>You have reached Page Sands. Please leave a message.</Say>
+  <Say>You have reached Jordan Lee. Please leave a message.</Say>
   <Record maxLength="120" playBeep="true"/>
 </Response>
 ```
@@ -90,6 +79,34 @@ TWILIO_ACCOUNT_SID   TWILIO_AUTH_TOKEN   TWILIO_NUMBER   (E.164, for example +14
 ```
 
 The script only reads from Twilio. It never places calls or sends texts.
+
+## Install
+
+You need [Claude Code](https://claude.com/claude-code). Type these two commands into Claude Code itself, in the same box where you chat with Claude. They are not terminal commands.
+
+```
+/plugin marketplace add wpsands/speed-to-lead
+/plugin install speed-to-lead@speed-to-lead
+```
+
+1. The first command registers this public GitHub repo as a plugin source. Claude Code calls a source like this a marketplace. Nothing is installed yet.
+2. The second command installs the plugin. The format is `plugin@marketplace`. The plugin and the repo share the name `speed-to-lead`, so the name appears twice.
+3. Restart Claude Code if the plugin does not show up right away.
+
+To get a later version, run `/plugin marketplace update speed-to-lead`.
+
+Then ask Claude Code: "Run a speed to lead test on our demo form" with your company name and form URL, or "Run a speed to lead test on {company}" for a single prospect.
+
+Nothing needs to be scheduled. The inbox, Twilio and LinkedIn all keep timestamps, so the agent collects everything in one pass after the seven days and scores it then. Do not reply to, delete or archive anything from the company during the window.
+
+## Who sees what
+
+The plugin runs on your machine, with your accounts. Installing it downloads a copy of this public repo, the same files the Code button on GitHub gives you. It needs no GitHub account and grants no access in either direction.
+
+- It fills forms with the name, email and phone number you give it.
+- It reads replies from the inbox your Gmail connector is signed in to, and calls and texts from your own Twilio account.
+- Results go in a `runs/` folder on your machine.
+- Nothing is sent to the author, to this repo or to sandsdx.com.
 
 ## The CLI
 
